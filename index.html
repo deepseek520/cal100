@@ -2,119 +2,165 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>小学生每日计算题生成器</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小学生每日计算题</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
-        .config-area { background: #f5f5f5; padding: 20px; border-radius: 10px; }
-        .print-button { 
-            background: #4CAF50; 
-            color: white; 
-            padding: 15px 30px;
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f8ff;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        select, button {
+            padding: 8px;
+            margin-right: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
             border: none;
-            border-radius: 5px;
             cursor: pointer;
-            font-size: 18px;
+            padding: 8px 20px;
         }
-        .problems {
-            column-count: 4;
-            margin: 20px 0;
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #questions {
             font-size: 16px;
+            line-height: 2;
         }
-        .problem {
-            margin: 8px 0;
-            padding: 4px;
-            break-inside: avoid;
+
+        .question {
+            display: inline-block;
+            width: 80px;
+            margin-right: 20px;
+            margin-bottom: 10px;
         }
+
         @media print {
-            .config-area { display: none; }
-            .problems { column-count: 4; }
+            body {
+                font-family: Arial, sans-serif;
+                font-size: 14px;
+            }
+            .question {
+                display: inline-block;
+                width: 80px;
+                margin-right: 20px;
+                margin-bottom: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="config-area">
-        <h2>题目设置</h2>
-        <div>
-            <label>题目类型：</label>
-            <select id="typeSelect">
-                <option value="10+">10以内加法</option>
-                <option value="10-">10以内减法</option>
-                <option value="10+-">10以内混合</option>
-                <option value="20+">20以内加法</option>
-                <option value="20-">20以内减法</option>
-                <option value="20+-">20以内混合</option>
-                <option value="50+-">50以内混合</option>
-                <option value="100+-">100以内混合</option>
-                <option value="multi">多位数混合</option>
+    <div class="container">
+        <h1>小学生每日计算题</h1>
+        
+        <div class="controls">
+            <select id="questionType">
+                <option value="add10">10以内加法</option>
+                <option value="sub10">10以内减法</option>
+                <option value="mix10">10以内混合加减法</option>
+                <option value="add20">20以内加法</option>
+                <option value="sub20">20以内减法</option>
+                <option value="mix20">20以内混合加减法</option>
+                <option value="add50">50以内加法</option>
+                <option value="sub50">50减以内法</option>
+                <option value="mix50">50以内混合加减法</option>
+                <option value="add100">100以内加法</option>
+                <option value="sub100">100以内减法</option>
+                <option value="mix100">100以内混合加减法</option>
+                <option value="multi100">100以内混合多位数加减法</option>
             </select>
+
+            <select id="difficulty">
+                <option value="easy">简单</option>
+                <option value="medium">中等</option>
+                <option value="hard">困难</option>
+            </select>
+
+            <button onclick="generateQuestions()">生成题目</button>
+            <button onclick="printQuestions()">打印题目</button>
         </div>
-        <div style="margin-top: 10px;">
-            <button class="print-button" onclick="generate()">生成题目</button>
-            <button class="print-button" onclick="window.print()">打印题目</button>
-        </div>
+
+        <div id="questions"></div>
     </div>
 
-    <div id="output"></div>
-
     <script>
-        function generate() {
-            const type = document.getElementById('typeSelect').value;
-            let problems = [];
+        // 随机生成题目
+        function generateQuestion(type, difficulty) {
+            let min = 0, max = 0;
+            switch(difficulty) {
+                case 'easy':
+                    min = 1; 
+                    max = type.includes('multi') ? 50 : 10;
+                    break;
+                case 'medium':
+                    min = type.includes('multi') ? 20 : 5;
+                    max = type.includes('multi') ? 100 : 20;
+                    break;
+                case 'hard':
+                    min = type.includes('multi') ? 50 : 10;
+                    max = 100;
+                    break;
+            }
+
+            let a = Math.floor(Math.random() * (max - min + 1)) + min;
+            let b = Math.floor(Math.random() * (max - min + 1)) + min;
+
+            if (type.includes('multi')) {
+                a = Math.floor(Math.random() * (max - min + 1)) + min;
+                b = Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+
+            let operator = type.includes('add') ? '+' : (type.includes('sub') ? '-' : Math.random() > 0.5 ? '+' : '-');
+
+            return `${a} ${operator} ${b} = `;
+        }
+
+        // 生成题目
+        function generateQuestions() {
+            const type = document.getElementById('questionType').value;
+            const difficulty = document.getElementById('difficulty').value;
+            const questionsContainer = document.getElementById('questions');
             
-            for(let i=0; i<100; i++){
-                let problem = createProblem(type);
-                while(problems.includes(problem)){ // 避免重复题目
-                    problem = createProblem(type);
-                }
-                problems.push(problem);
-            }
-
-            displayProblems(problems);
-        }
-
-        function createProblem(type) {
-            let a, b, op;
-            switch(type) {
-                case '10+': 
-                    a = rand(0,10);
-                    b = rand(0,10-a);
-                    return `${a} + ${b} =`;
-                case '10-':
-                    a = rand(1,10);
-                    b = rand(0,a);
-                    return `${a} - ${b} =`;
-                case '10+-':
-                    return Math.random()<0.5 ? 
-                        createProblem('10+') : createProblem('10-');
-                // 其他类型类似处理...
-                case 'multi':
-                    a = rand(10,99);
-                    b = rand(10,99);
-                    op = Math.random()<0.5 ? '+' : '-';
-                    if(op === '-' && a < b) [a,b] = [b,a]; // 避免负数
-                    return `${a} ${op} ${b} =`;
-                default:
-                    return "2 + 3 =";
+            questionsContainer.innerHTML = '';
+            
+            for (let i = 0; i < 100; i++) {
+                const question = generateQuestion(type, difficulty);
+                const div = document.createElement('div');
+                div.className = 'question';
+                div.textContent = question;
+                questionsContainer.appendChild(div);
             }
         }
 
-        function rand(min, max) {
-            return Math.floor(Math.random()*(max-min+1))+min;
+        // 打印功能
+        function printQuestions() {
+            window.print();
         }
-
-        function displayProblems(problems) {
-            const container = document.getElementById('output');
-            container.innerHTML = `
-                <div class="problems">
-                    ${problems.map(p => `
-                        <div class="problem">${p}</div>
-                    `).join('')}
-                </div>
-                <h3>答案（供老师家长使用）</h3>
-                <div class="problems">
-                    ${problems.map(p => `
-                        <div class="problem">${p} ${eval(p.replace('=',''))}</div>
-                    `).join('')}
-                </div>
-            `;
-        }
+    </script>
+</body>
+</html>
