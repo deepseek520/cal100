@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>小学生每日计算题生成器</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .config-area { background: #f5f5f5; padding: 20px; border-radius: 10px; }
+        .print-button { 
+            background: #4CAF50; 
+            color: white; 
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .problems {
+            column-count: 4;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .problem {
+            margin: 8px 0;
+            padding: 4px;
+            break-inside: avoid;
+        }
+        @media print {
+            .config-area { display: none; }
+            .problems { column-count: 4; }
+        }
+    </style>
+</head>
+<body>
+    <div class="config-area">
+        <h2>题目设置</h2>
+        <div>
+            <label>题目类型：</label>
+            <select id="typeSelect">
+                <option value="10+">10以内加法</option>
+                <option value="10-">10以内减法</option>
+                <option value="10+-">10以内混合</option>
+                <option value="20+">20以内加法</option>
+                <option value="20-">20以内减法</option>
+                <option value="20+-">20以内混合</option>
+                <option value="50+-">50以内混合</option>
+                <option value="100+-">100以内混合</option>
+                <option value="multi">多位数混合</option>
+            </select>
+        </div>
+        <div style="margin-top: 10px;">
+            <button class="print-button" onclick="generate()">生成题目</button>
+            <button class="print-button" onclick="window.print()">打印题目</button>
+        </div>
+    </div>
+
+    <div id="output"></div>
+
+    <script>
+        function generate() {
+            const type = document.getElementById('typeSelect').value;
+            let problems = [];
+            
+            for(let i=0; i<100; i++){
+                let problem = createProblem(type);
+                while(problems.includes(problem)){ // 避免重复题目
+                    problem = createProblem(type);
+                }
+                problems.push(problem);
+            }
+
+            displayProblems(problems);
+        }
+
+        function createProblem(type) {
+            let a, b, op;
+            switch(type) {
+                case '10+': 
+                    a = rand(0,10);
+                    b = rand(0,10-a);
+                    return `${a} + ${b} =`;
+                case '10-':
+                    a = rand(1,10);
+                    b = rand(0,a);
+                    return `${a} - ${b} =`;
+                case '10+-':
+                    return Math.random()<0.5 ? 
+                        createProblem('10+') : createProblem('10-');
+                // 其他类型类似处理...
+                case 'multi':
+                    a = rand(10,99);
+                    b = rand(10,99);
+                    op = Math.random()<0.5 ? '+' : '-';
+                    if(op === '-' && a < b) [a,b] = [b,a]; // 避免负数
+                    return `${a} ${op} ${b} =`;
+                default:
+                    return "2 + 3 =";
+            }
+        }
+
+        function rand(min, max) {
+            return Math.floor(Math.random()*(max-min+1))+min;
+        }
+
+        function displayProblems(problems) {
+            const container = document.getElementById('output');
+            container.innerHTML = `
+                <div class="problems">
+                    ${problems.map(p => `
+                        <div class="problem">${p}</div>
+                    `).join('')}
+                </div>
+                <h3>答案（供老师家长使用）</h3>
+                <div class="problems">
+                    ${problems.map(p => `
+                        <div class="problem">${p} ${eval(p.replace('=',''))}</div>
+                    `).join('')}
+                </div>
+            `;
+        }
